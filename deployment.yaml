@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice-pet
+  labels:
+    app: microservice-pet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: microservice-pet
+  template:
+    metadata:
+      labels:
+        app: microservice-pet
+    spec:
+      containers:
+        - name: microservice-pet
+          image: jtan22/microservice-pet:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: DB_URL
+              value: jdbc:mysql://host.docker.internal/petclinic
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: microservice-pet
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8082
+  selector:
+    app: microservice-pet
