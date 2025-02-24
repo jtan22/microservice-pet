@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKERHUB_REPO = 'jtan22/microservice-vet'
+        DOCKERHUB_REPO = 'jtan22/microservice-pet'
         DOCKERHUB_CREDENTIAL = 'dockerhub'
     }
 
