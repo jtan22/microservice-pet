@@ -21,7 +21,7 @@ public class PetController {
 
     @GetMapping("/pets")
     public List<Pet> findAll(@RequestParam(value = "ownerId", required = false) Integer ownerId) {
-        log.info("GET findAll ownerId [" + ownerId + "]");
+        log.info("GET findAll ownerId [{}]", ownerId);
         if (ownerId == null) {
             return petRepository.findAll();
         } else {
