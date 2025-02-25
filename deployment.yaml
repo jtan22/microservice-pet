@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: microservice-pet
-          image: jtan22/microservice-pet:latest
+          image: jtan22/microservice-pet:${PROJECT_VERSION}
           ports:
             - containerPort: 8080
           env:
