@@ -1,18 +1,25 @@
 package com.bw.pet.controller;
 
 import com.bw.pet.domain.Pet;
+import com.bw.pet.domain.PetType;
 import com.bw.pet.repository.PetRepository;
+import com.bw.pet.repository.PetTypeRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,6 +31,11 @@ public class PetControllerUnitTest {
 
     @MockBean
     private PetRepository petRepository;
+
+    @MockBean
+    private PetTypeRepository petTypeRepository;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     public void testFindAllDefault() throws Exception {
@@ -41,6 +53,41 @@ public class PetControllerUnitTest {
                 .perform(get("/pets?ownerId=1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @Test
+    public void testFindAllPetTypes() throws Exception {
+        when(petTypeRepository.findAll()).thenReturn(List.of(new PetType(), new PetType(), new PetType()));
+        mockMvc
+                .perform(get("/pet-types"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)));
+    }
+
+    @Test
+    public void testAdd() throws Exception {
+        objectMapper.findAndRegisterModules();
+        Pet pet = createPet();
+        when(petRepository.save(pet)).thenReturn(pet);
+        mockMvc
+                .perform(post("/pets")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(pet)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name", is("Test")))
+                .andExpect(jsonPath("$.ownerId", is(1)));
+    }
+
+    private Pet createPet() {
+        PetType petType = new PetType();
+        petType.setId(1);
+        petType.setName("Cat");
+        Pet pet = new Pet();
+        pet.setName("Test");
+        pet.setBirthDate(LocalDate.now());
+        pet.setOwnerId(1);
+        pet.setPetType(petType);
+        return pet;
     }
 
 }

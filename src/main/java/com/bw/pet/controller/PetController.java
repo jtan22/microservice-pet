@@ -1,11 +1,13 @@
 package com.bw.pet.controller;
 
 import com.bw.pet.domain.Pet;
+import com.bw.pet.domain.PetType;
 import com.bw.pet.repository.PetRepository;
+import com.bw.pet.repository.PetTypeRepository;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -15,8 +17,11 @@ public class PetController {
 
     private final PetRepository petRepository;
 
-    public PetController(PetRepository petRepository) {
+    private final PetTypeRepository petTypeRepository;
+
+    public PetController(PetRepository petRepository, PetTypeRepository petTypeRepository) {
         this.petRepository = petRepository;
+        this.petTypeRepository = petTypeRepository;
     }
 
     @GetMapping("/pets")
@@ -27,6 +32,19 @@ public class PetController {
         } else {
             return petRepository.findByOwnerId(ownerId);
         }
+    }
+
+    @GetMapping("/pet-types")
+    public List<PetType> findAllPetTypes() {
+        log.info("GET findAllPetTypes");
+        return petTypeRepository.findAll();
+    }
+
+    @PostMapping("/pets")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Pet add(@RequestBody @Valid Pet pet) {
+        log.info("POST add {}", pet);
+        return petRepository.save(pet);
     }
 
 }
