@@ -14,14 +14,15 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @WebMvcTest(PetController.class)
 public class PetControllerUnitTest {
@@ -76,6 +77,53 @@ public class PetControllerUnitTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name", is("Test")))
                 .andExpect(jsonPath("$.ownerId", is(1)));
+    }
+
+    @Test
+    public void testFindById() throws Exception {
+        Pet pet = createPet();
+        pet.setId(1);
+        when(petRepository.findById(1)).thenReturn(Optional.of(pet));
+        mockMvc
+                .perform(get("/pets/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(1)));
+    }
+
+    @Test
+    public void testFindByIdNotFound() throws Exception {
+        mockMvc
+                .perform(get("/pets/10000"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Not Found [Pet [10000] not found]"));
+    }
+
+    @Test
+    public void testUpdate() throws Exception {
+        objectMapper.findAndRegisterModules();
+        Pet pet = createPet();
+        pet.setId(1);
+        when(petRepository.findById(1)).thenReturn(Optional.of(pet));
+        when(petRepository.save(pet)).thenReturn(pet);
+        mockMvc
+                .perform(put("/pets/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(pet)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Test")));
+    }
+
+    @Test
+    public void testUpdateNotFound() throws Exception {
+        objectMapper.findAndRegisterModules();
+        Pet pet = createPet();
+        pet.setId(10000);
+        mockMvc
+                .perform(put("/pets/10000")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(pet)))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Not Found [Pet [10000] not found]"));
     }
 
     private Pet createPet() {

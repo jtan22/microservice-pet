@@ -16,8 +16,8 @@ import java.time.LocalDate;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -73,6 +73,48 @@ public class PetControllerIntTest {
         Pet savedPet = objectMapper.readValue(content, Pet.class);
         assertNotNull(savedPet.getId());
         jdbcTemplate.update("delete from pets where id = " + savedPet.getId());
+    }
+
+    @Test
+    public void testFindById() throws Exception {
+        mockMvc
+                .perform(get("/pets/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(1)));
+    }
+
+    @Test
+    public void testFindByIdNotFound() throws Exception {
+        mockMvc
+                .perform(get("/pets/10000"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Not Found [Pet [10000] not found]"));
+    }
+
+    @Test
+    public void testUpdate() throws Exception {
+        objectMapper.findAndRegisterModules();
+        Pet pet = createPet();
+        mockMvc
+                .perform(put("/pets/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(pet)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Test")));
+        jdbcTemplate.update("update pets set name = 'Leo' where id = 1");
+    }
+
+    @Test
+    public void testUpdateNotFound() throws Exception {
+        objectMapper.findAndRegisterModules();
+        Pet pet = createPet();
+        pet.setId(10000);
+        mockMvc
+                .perform(put("/pets/10000")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(pet)))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Not Found [Pet [10000] not found]"));
     }
 
     private Pet createPet() {
